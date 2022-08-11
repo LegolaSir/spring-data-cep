@@ -13,4 +13,6 @@ public interface ClientService {
     List<Client> list();
 
     Client getById(Long id);
+
+    void update(Long id, ClientForm form) throws ZipcodeNotFoundException;
 }

@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class ClientServiceImpl implements ClientService {
@@ -27,30 +28,7 @@ public class ClientServiceImpl implements ClientService {
 
     @Override
     public void insert(ClientForm form) throws ZipcodeNotFoundException {
-        if(form.getName().isEmpty()) throw new FormEmptyFieldException("Name Field");
-        if(form.getZipCode().isEmpty()) throw new FormEmptyFieldException("Zipcode Field");
-
-        String zipCode = form.getZipCode();
-        Client item = new Client();
-
-        item.setName(form.getName());
-
-        Address address = addressRepository.findById(zipCode).orElseGet(() -> {
-            String feedbackStr = viaCepService.searchCep(zipCode);
-            if(feedbackStr.isEmpty()) return null;
-
-            JSONObject feedbackJson = new JSONObject(feedbackStr);
-            if(feedbackJson.getString("erro").equals("true")) return null;
-
-            Address addressFound = buildAddressByJson(feedbackJson);
-
-            addressRepository.save(addressFound);
-            return addressFound;
-        });
-        if(address == null) throw new ZipcodeNotFoundException(zipCode);
-
-        item.setAddress(address);
-        clientRepository.save(item);
+        persistClientByZipcode(form, Optional.empty());
     }
 
     @Override
@@ -66,6 +44,48 @@ public class ClientServiceImpl implements ClientService {
         if(client == null) throw new ClientNotFoundException();
 
         return client;
+    }
+
+    @Override
+    public void update(Long id, ClientForm form) throws ZipcodeNotFoundException {
+        Optional<Client> clientDb = clientRepository.findById(id);
+
+        if(clientDb.isPresent()) {
+            persistClientByZipcode(form, Optional.of(id));
+        }
+        else {
+            throw new ClientNotFoundException();
+        }
+    }
+
+    private void persistClientByZipcode(ClientForm form, Optional<Long> clientId) throws ZipcodeNotFoundException {
+        if(form.getName().isEmpty()) throw new FormEmptyFieldException("Name Field");
+        if(form.getZipCode().isEmpty()) throw new FormEmptyFieldException("Zipcode Field");
+
+        String zipCode = form.getZipCode();
+        Client item = new Client();
+
+        if(clientId.isPresent())
+            item.setId(clientId.get());
+
+        item.setName(form.getName());
+
+        Address address = addressRepository.findById(zipCode).orElseGet(() -> {
+            String feedbackStr = viaCepService.searchCep(zipCode);
+            if(feedbackStr.isEmpty()) return null;
+
+            JSONObject feedbackJson = new JSONObject(feedbackStr);
+            if(feedbackJson.optBoolean("erro")) return null;
+
+            Address addressFound = buildAddressByJson(feedbackJson);
+
+            addressRepository.save(addressFound);
+            return addressFound;
+        });
+        if(address == null) throw new ZipcodeNotFoundException(zipCode);
+
+        item.setAddress(address);
+        clientRepository.save(item);
     }
 
     private Address buildAddressByJson(JSONObject json){

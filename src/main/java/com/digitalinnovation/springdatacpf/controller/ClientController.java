@@ -64,4 +64,38 @@ public class ClientController {
         }
     }
 
+    @PutMapping("/{id}/update")
+    public ResponseEntity updateClient(@PathVariable(value = "id") Long id,
+                                       @Valid @RequestBody ClientForm form)
+    {
+        StringBuilder message = new StringBuilder();
+
+        try
+        {
+            service.update(id, form);
+            message.append("CLIENT ID <")
+                    .append(id)
+                    .append("> UPDATED IN DATABASE tb_clients");
+
+            return ResponseEntity.ok().body(message);
+        }
+        catch (ClientNotFoundException e)
+        {
+            message.append("CLIENT ID <")
+                    .append(id)
+                    .append("> NOT FOUND IN DATABASE tb_clients");
+        }
+        catch (FormEmptyFieldException e){
+            message.append("FAILED TO INSERT ELEMENT BECAUSE <")
+                    .append(e.getMessage())
+                    .append("> IS EMPTY");
+        }
+        catch (ZipcodeNotFoundException e){
+            message.append("FAILED TO INSERT ELEMENT BECAUSE ZIPCODE <")
+                    .append(e.getMessage())
+                    .append("> IS INVALID");
+        }
+
+        return ResponseEntity.badRequest().body(message);
+    }
 }
