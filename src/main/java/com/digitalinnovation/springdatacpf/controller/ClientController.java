@@ -1,15 +1,13 @@
 package com.digitalinnovation.springdatacpf.controller;
 
 import com.digitalinnovation.springdatacpf.entity.form.ClientForm;
+import com.digitalinnovation.springdatacpf.exception.ClientNotFoundException;
 import com.digitalinnovation.springdatacpf.exception.FormEmptyFieldException;
 import com.digitalinnovation.springdatacpf.exception.ZipcodeNotFoundException;
 import com.digitalinnovation.springdatacpf.service.ClientService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 
@@ -31,7 +29,7 @@ public class ClientController {
                     .append(form.getName())
                     .append("> RELATED TO ZIPCODE: <")
                     .append(form.getZipCode())
-                    .append("> HAS BEEN INSERTED INTO DATABA tb_clients");
+                    .append("> HAS BEEN INSERTED INTO DATABASE tb_clients");
 
             return ResponseEntity.ok().body(message);
         }
@@ -48,4 +46,22 @@ public class ClientController {
 
         return ResponseEntity.badRequest().body(message);
     }
+
+    @GetMapping("/list")
+    public ResponseEntity list(){
+        return ResponseEntity.ok().body(service.list());
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity getClient(@PathVariable(value = "id") Long id){
+        try
+        {
+            return ResponseEntity.ok(service.getById(id));
+        }
+        catch (ClientNotFoundException e)
+        {
+            return ResponseEntity.badRequest().body("CLIENT ID <" + id + "> NOT FOUND IN DATABASE tb_clients");
+        }
+    }
+
 }

@@ -3,6 +3,7 @@ package com.digitalinnovation.springdatacpf.service.impl;
 import com.digitalinnovation.springdatacpf.entity.Address;
 import com.digitalinnovation.springdatacpf.entity.Client;
 import com.digitalinnovation.springdatacpf.entity.form.ClientForm;
+import com.digitalinnovation.springdatacpf.exception.ClientNotFoundException;
 import com.digitalinnovation.springdatacpf.exception.FormEmptyFieldException;
 import com.digitalinnovation.springdatacpf.exception.ZipcodeNotFoundException;
 import com.digitalinnovation.springdatacpf.repository.AddressRepository;
@@ -19,10 +20,8 @@ import java.util.List;
 public class ClientServiceImpl implements ClientService {
     @Autowired
     private ClientRepository clientRepository;
-
     @Autowired
     private AddressRepository addressRepository;
-
     @Autowired
     private ViaCepService viaCepService;
 
@@ -56,12 +55,17 @@ public class ClientServiceImpl implements ClientService {
 
     @Override
     public List<Client> list() {
-        return null;
+        return clientRepository.findAll();
     }
 
     @Override
     public Client getById(Long id) {
-        return null;
+        Client client = clientRepository.findById(id).orElseGet(() -> {
+            return null;
+        });
+        if(client == null) throw new ClientNotFoundException();
+
+        return client;
     }
 
     private Address buildAddressByJson(JSONObject json){
