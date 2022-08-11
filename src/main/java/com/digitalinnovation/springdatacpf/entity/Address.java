@@ -16,7 +16,7 @@ import javax.validation.constraints.Size;
 public class Address {
 
     @Id
-    @Column(length = 8)
+    @Column(length = 9)
     private String zipCode;
 
     @Column(nullable = false)
